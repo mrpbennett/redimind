@@ -101,3 +101,13 @@ All three deepening changes are implemented behind the existing `Memory` interfa
 ### Client approval review
 
 `memory_propose` saves a draft and directs the agent to call `memory_review`; the latter elicits a flat Approve/Reject decision in trusted MCP clients, checks the reviewed revision, and records approval or rejection. Cancellation and unsupported elicitation leave the saved draft pending; incomplete drafts cannot prompt. Enabled stateful legacy HTTP so the prompt works with the classic MCP handshake used by OpenCode, and verified both legacy and modern protocol flows over real or in-memory HTTP. All 31 tests passed against disposable Redis on port 16380, including agent-token mode and changed-draft protection. Ruff lint/format and a Docker image build/import passed. The owner CLI remains available as a fallback; actual Claude Code/OpenCode prompt rendering requires testing in those clients.
+
+## Nginx for a private-LAN VM
+
+- [x] Add an Nginx HTTPS reverse-proxy example for the VM's LAN IP, forwarding MCP streams and preserving the Host header.
+- [x] Add an OpenSSL server-certificate config with an IP subject alternative name and document a local CA, certificate trust, VM installation, and client verification.
+- [x] Link the new guide from the README without replacing the existing Caddy path; validate certificates and Nginx syntax in isolation.
+
+### Nginx review
+
+The Nginx config passes `nginx -t` in an isolated official Nginx container. The documented OpenSSL sequence created a private CA and IP-SAN server certificate, and `openssl verify -verify_ip` passed for the example VM address. Temporary validation keys/certificates were removed. The README links both config templates and the deployment guide; the user's VM has not been modified.

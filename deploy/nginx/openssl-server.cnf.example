@@ -1,0 +1,20 @@
+# Copy to /etc/nginx/tls/openssl-server.cnf and replace BOTH IP occurrences.
+[req]
+prompt = no
+distinguished_name = subject
+req_extensions = request_ext
+
+[subject]
+CN = 192.168.6.20
+
+[request_ext]
+subjectAltName = @ip_name
+
+[server_ext]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @ip_name
+
+[ip_name]
+IP.1 = 192.168.6.20

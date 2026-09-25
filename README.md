@@ -67,6 +67,88 @@ HTTP endpoint exposes no owner-management routes in local mode. For scripts, use
 `show`, `approve`, `link`, `supersede`, `retire`, `delete`, and `reindex` commands remain
 available via `redimind --help`.
 
+## Host Redimind on a VM
+
+`docker compose up` starts **Redis only**. On the VM, start Redis and the MCP process
+from a clone of this repo. If it lives only on your Proxmox LAN, use its **VM IP**;
+replace `192.168.6.20` below with that address (not the Proxmox host's IP):
+
+```sh
+docker compose up -d --wait
+uv sync
+export REDIMIND_AUTH_MODE=tokens
+export REDIMIND_REDIS_URL=redis://127.0.0.1:6379/0
+export REDIMIND_AGENT_TOKEN='YOUR_PERSISTENT_AGENT_TOKEN'
+export REDIMIND_OWNER_TOKEN='A_DIFFERENT_PERSISTENT_OWNER_TOKEN'
+export REDIMIND_ALLOWED_HOSTS='192.168.6.20,192.168.6.20:*'
+uv run redimind-server
+```
+
+Replace both token placeholders with independently generated secrets; store them
+securely and reuse them across restarts. Leave the MCP process
+bound to its default `127.0.0.1:8000`; a TLS-terminating reverse proxy on the **same
+VM** can forward HTTPS on the LAN address to it. For example, a Caddy site with an
+internal certificate (no public DNS needed):
+
+```caddyfile
+https://192.168.6.20 {
+    tls internal
+    reverse_proxy 127.0.0.1:8000
+}
+```
+
+Copy Caddy's **local CA root certificate** (`pki/authorities/local/root.crt` in its
+data directory) from the VM and trust it on your dev machine; trusting it only on the
+VM does not make your dev client's TLS connection trusted. See
+[Caddy's local HTTPS guide](https://caddyserver.com/docs/automatic-https#local-https).
+Prefer Nginx? Follow the [private-LAN Nginx guide](docs/deployment/nginx-private-lan.md)
+with ready-to-copy [proxy](deploy/nginx/redimind.conf.example) and
+[certificate](deploy/nginx/openssl-server.cnf.example) config examples instead of
+the Caddy site above. These templates live in the **cloned repo**, not the VM's stock
+`/etc/nginx/` directory. Run the guide from the repo root: it creates
+`/etc/nginx/tls/`, generates the certificate, then copies the proxy config into the
+VM's existing `/etc/nginx/conf.d/`. Generate the certificate before running `nginx -t`.
+Check `curl https://192.168.6.20/health` from the dev machine after trusting the CA;
+it should return `{"status":"ok"}`. The dev machine must be able to reach the VM
+on port 443; no internet-facing port or public hostname is required.
+
+Keep Redis on its Compose localhost port; expose HTTPS (typically port 443), not
+Redis or the MCP process's port 8000. The server must keep running after you close
+your VM terminal, for example under a process manager. Use one MCP worker for legacy
+client elicitation; see [operations](docs/operations.md) before scaling it out.
+
+On your **dev machine**, set `REDIMIND_AGENT_TOKEN` to the same agent token, then
+configure the trusted client with `https://192.168.6.20/mcp`. For Claude Code:
+
+```sh
+claude mcp add --scope user --transport http redimind \
+  https://192.168.6.20/mcp \
+  --header "Authorization: Bearer $REDIMIND_AGENT_TOKEN"
+```
+
+For OpenCode 1.x, add this entry to your existing `opencode.json` under `mcp`
+(keep its other settings), then restart OpenCode:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "redimind": {
+      "type": "remote",
+      "url": "https://192.168.6.20/mcp",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:REDIMIND_AGENT_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Keep the owner token on the VM for CLI fallback. Once connected,
+`memory_propose` → `memory_review` presents the
+Approve/Reject prompt **on your dev machine** while Redis stores entries on the VM.
+
 ## Showcase: reuse a lesson across projects
 
 With the MCP client connected, ask your agent:
@@ -122,9 +204,7 @@ The first command returns the full document, including its numeric search embedd
 Use `$.claim` for an approved entry's claim, or `$.fields` for an unapproved draft.
 These are Redis JSON documents, so plain `GET` returns a `WRONGTYPE` error.
 
-Processes running as your OS user can also run the owner CLI in local mode. For a
-network-hosted MCP endpoint, configure `REDIMIND_AGENT_TOKEN`,
-`REDIMIND_OWNER_TOKEN`, and `REDIMIND_REDIS_URL` on the host alongside token mode.
+Processes running as your OS user can also run the owner CLI in local mode.
 
 Run the integration suite against a **disposable Redis 8 database 0**, never a production
 instance (the tests flush their configured database):

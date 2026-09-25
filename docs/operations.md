@@ -89,6 +89,10 @@ trust to do so. Headless clients without elicitation cannot approve via MCP.
 
 ## Moving the service
 
+For a VM reachable only on a private LAN, see the
+[Nginx reverse-proxy example](deployment/nginx-private-lan.md) as an alternative
+to the Caddy site in the README.
+
 The image in `Dockerfile` runs the same MCP service as the local command. Set
 `REDIMIND_AUTH_MODE=tokens` and `REDIMIND_HOST=0.0.0.0` only behind a TLS-terminating reverse proxy, with a specific
 `REDIMIND_ALLOWED_HOSTS='memory.example.com,memory.example.com:*'` and, for
