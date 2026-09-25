@@ -1,0 +1,1 @@
+"""Redimind shared memory service."""

@@ -1,0 +1,10 @@
+# Lessons
+
+- After changing Python source layout or build mappings, verify both the installed console script and the built wheel's import paths. `uv sync` can succeed even if the wheel contains `src/redimind/` rather than the importable `redimind/` package.
+- When a single-user localhost service needs manual agent and owner tokens before first use, offer a local trust mode with loopback-only access and a one-time ignored config. Keep the authenticated network mode available rather than making local setup depend on distributed credentials.
+- After changing server authentication mode, verify the live listener without credentials (`/admin/candidates` is 404 in local mode, 401 in token mode). A saved local config does not change an already-running server or override an explicit `REDIMIND_AUTH_MODE=tokens` in its shell.
+- When switching from an SSH tunnel to direct Redis, replace the saved Redis URL before stopping the tunnel. Verify the selected host and port without printing credentials; a closed tunnel at `127.0.0.1:16379` can look like a new remote-Redis failure after changing the server configuration.
+- When local onboarding depends on keeping an external Redis service or SSH tunnel running, ship a reproducible local Redis container with persistent storage and keep destructive tests on a separate disposable container.
+- When an agent-facing MCP tool takes an untyped object, agents can invent plausible keys that the server rejects. Publish a typed input schema and normalize meaning-preserving aliases at the boundary; derive proposer identity from the server rather than the client payload.
+- When owner review requires copying both an ID and revision between CLI calls, keep the revision check but make the displayed candidate and the approval decision one interactive step. Preserve machine-readable output for piping and owner approval outside MCP.
+- When the owner works through a remote MCP client, a local `uv` review command is not the same interaction surface. Use a client-rendered, explicit human elicitation for trusted clients; persist the draft first and keep it pending when the client cannot prompt or cancels.

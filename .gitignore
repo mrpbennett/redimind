@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local Redimind connection settings (may contain Redis credentials)
+/redimind.local.toml*

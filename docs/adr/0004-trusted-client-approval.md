@@ -1,0 +1,3 @@
+# Trusted MCP-client confirmation can review candidate entries
+
+The owner wants to approve or reject candidate entries in the connected agent conversation when Redimind is remote, without running the owner CLI on that host. Allow an explicitly trusted MCP client to present an elicitation prompt and treat its user response as the owner review decision; keep the candidate pending when the client cannot ask or the prompt is cancelled. A separate owner CLI remains available, but this approval path trusts the client to show the prompt to a person rather than providing an independent owner credential; optimistic revision checks still prevent approving changed candidate content unseen.
