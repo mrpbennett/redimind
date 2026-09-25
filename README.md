@@ -2,7 +2,7 @@
     <img src="./assets/logo.png" width="350" alt="Logo"/>
     <br/>
     <sub>RediMind</sub>
-</h1>j
+</h1>
 
 Owner-reviewed, Redis-backed memory for coding agents. Docker Compose runs the local
 Redis 8 store; a local MCP service lets agents search and propose while the owner
